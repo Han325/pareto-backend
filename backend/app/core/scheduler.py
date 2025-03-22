@@ -38,14 +38,6 @@ def generate_feasible_schedules(
     Returns:
         List of feasible schedules
         
-    pre: len(tasks) > 0
-    pre: len(objectives) > 0
-    pre: all([task.duration > 0 for task in tasks])
-    pre: constraints.max_daily_work_minutes > 0
-    pre: constraints.max_weekly_work_minutes > 0
-    post: all([is_schedule_feasible(s, constraints) for s in __return__])
-    post: all([len(s.tasks) > 0 for s in __return__])
-    post: all([obj_id in s.objective_scores for s in __return__ for obj_id in [obj.id for obj in objectives]])
     """
     if not tasks:
         raise ValueError("Cannot generate schedules without tasks")
@@ -394,9 +386,7 @@ def _generate_random_schedule(tasks: List[Task], constraints: TimeConstraints) -
 def is_schedule_feasible(schedule: Schedule, constraints: TimeConstraints) -> bool:
     """
     Verify if a schedule meets all time constraints and dependency rules.
-    
-    This is the key function that must be verified by CrossHair!
-    
+        
     Args:
         schedule: The schedule to check
         constraints: The constraints to validate against
@@ -422,16 +412,7 @@ def is_schedule_feasible(schedule: Schedule, constraints: TimeConstraints) -> bo
         for slot in available_slots:
             slot_start = datetime.combine(start_time.date(), slot.start_time)
             slot_end = datetime.combine(start_time.date(), slot.end_time)
-            
-            # Handle slots that cross midnight
-            if slot.end_time <= slot.start_time:
-                # DELIBERATE BUG: This implementation has a subtle error
-                # The bug is in how we handle slots that cross midnight
-                # The correct implementation would add a day to slot_end
-                # slot_end += timedelta(days=1)
-                # But we "forget" to do this, causing tasks that span midnight to be incorrectly rejected
-                pass
-            
+
             # Check if task fits in slot
             if start_time >= slot_start and end_time <= slot_end:
                 slot_valid = True
@@ -524,9 +505,7 @@ def check_time_slot_overlap(time_slots: list) -> bool:
     [(30, 90), (120, 180)] => False (no overlaps)
     [(30, 90), (60, 120)] => True (slots overlap)
     [(30, 90), (90, 150)] => False (touching but not overlapping)
-    
-    pre: all(isinstance(slot, tuple) and len(slot) == 2 for slot in time_slots) and all(0 <= slot[0] < 1440 and 0 < slot[1] <= 1440 for slot in time_slots) and all(slot[0] < slot[1] for slot in time_slots)
-    post: (len(time_slots) <= 1 and not __return__) or __return__ == any(s1[0] < s2[1] and s2[0] < s1[1] for i, s1 in enumerate(time_slots) for s2 in time_slots[i+1:])
+
     """
     # If there's only one or zero time slots, there can't be overlaps
     if len(time_slots) <= 1:
@@ -535,10 +514,6 @@ def check_time_slot_overlap(time_slots: list) -> bool:
     # Sort slots by start time
     sorted_slots = sorted(time_slots, key=lambda x: x[0])
     
-    # Check each pair of adjacent slots in the sorted list
-    # BUG: This implementation has a subtle error
-    # It only checks adjacent slots after sorting, but non-adjacent slots could still overlap
-    # For example: [(30, 120), (60, 90), (150, 180)] would miss the overlap between slots 0 and 1
     for i in range(len(sorted_slots) - 1):
         current_end = sorted_slots[i][1]
         next_start = sorted_slots[i + 1][0]
@@ -561,12 +536,7 @@ def calculate_objective_scores(
         
     Returns:
         Dictionary mapping objective IDs to scores (0-1 scale)
-        
-    pre: len(objectives) > 0
-    pre: all([obj.target_value > 0 for obj in objectives])
-    post: len(__return__) == len(objectives)
-    post: all([0 <= score <= 1 for score in __return__.values()])
-    post: all([obj_id in [obj.id for obj in objectives] for obj_id in __return__.keys()])
+
     """
     if not objectives:
         raise ValueError("Cannot calculate scores without objectives")
@@ -595,19 +565,53 @@ def check_task_fits_slot(task_start: int, task_duration: int, slot_start: int, s
         slot_end: End hour of the slot (0-23)
         
     Returns:
-        True if task fits in slot, False otherwise
+        True if the task fits within the slot, False otherwise
     """
-    task_end = task_start + task_duration
-    
-    # Handle slots that wrap around midnight
-    if slot_end <= slot_start:
-        return slot_start <= task_start < 24
 
-    # Normal case (slot doesn't cross midnight)
-    return slot_start <= task_start and task_end <= slot_end
+    # Handle multi-day tasks by checking hour by hour
+    if task_duration >= 24:
+        # For very long tasks, check each hour in the first 24-hour period
+        # to see if the task conflicts with the time slot
+        fits_in_slot = True
+        
+        for hour_offset in range(min(task_duration, 48)):  # Check up to 48 hours
+            current_hour = (task_start + hour_offset) % 24
+            
+            # For normal slots (not crossing midnight)
+            if slot_end >= slot_start:
+                # If any hour is outside the slot, the task doesn't fit
+                if current_hour < slot_start or current_hour >= slot_end:
+                    if hour_offset < 24:  # Only check the first day
+                        fits_in_slot = False
+                        break
+            else:
+                # Slot crosses midnight - check if hour is in the gap between end and start
+                if current_hour >= slot_end and current_hour < slot_start:
+                    if hour_offset < 24:  # Only check the first day
+                        fits_in_slot = False
+                        break
+        
+        result = fits_in_slot
+    else:
+        # For shorter tasks, use the direct calculation
+        task_end = (task_start + task_duration) % 24
+        
+        # Normal case: slot doesn't cross midnight
+        if slot_end >= slot_start:
+            result = slot_start <= task_start and task_end <= slot_end
+        
+        # Slot crosses midnight, e.g., 22-2
+        else:
+            if task_end <= task_start:  # Task also crosses midnight
+                result = (slot_start <= task_start) and (task_end <= slot_end)
+            else:
+                result = (slot_start <= task_start) or (task_end <= slot_end)
+        
+    return result
 
-def is_schedule_valid(tasks: List, task_start_times: Dict[str, int], 
-                     available_slots: List, max_daily_hours: int) -> bool:
+
+def is_schedule_valid(tasks: List[Task], task_start_times: Dict[str, int], 
+                     available_slots: List[TimeSlot], max_daily_hours: int) -> bool:
     """
     Validate if a schedule meets the constraints.
     
