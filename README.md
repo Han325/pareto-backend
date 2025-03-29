@@ -76,14 +76,6 @@ docker build -t pareto-backend .
 docker run -d -p 8000:8000 --name pareto pareto-backend
 ```
 
-### Other Cloud Providers
-
-The app can also be deployed to:
-- Fly.io (Free tier available)
-- Railway (Starting at $5/month)
-- PythonAnywhere (Free tier available)
-- Heroku (Basic Eco dynos at $5/month)
-
 ## API Endpoints
 
 Main resource endpoints:
