@@ -1,118 +1,107 @@
 # Pareto Life Planner Backend
 
-A FastAPI-based backend for a multi-objective life planner using Pareto optimization to help users balance multiple life goals.
+A FastAPI backend for the Pareto Life Planner application, which helps users balance multiple life goals using Pareto optimization techniques.
 
 ## Features
 
-- Task management (create, read, update, delete)
-- Objective definition and tracking
-- Schedule generation using various strategies
-- Pareto optimization for finding the best schedules
+- Task management with durations, categories, and dependencies
+- Objective definition and tracking in multiple life categories
+- Schedule generation with multiple strategies
+- Pareto optimization to find schedules that balance competing objectives
 
-## Requirements
+## Quick Start
 
-- Python 3.8+
-- Poetry (recommended) or pip
-
-## Installation
-
-### Using Poetry (recommended)
+### Development Setup
 
 ```bash
-# Install Poetry if not already installed
-# curl -sSL https://install.python-poetry.org | python3 -
+# Create a virtual environment
+python3 -m venv venv
 
-# Install dependencies
-poetry install
-```
-
-### Using pip
-
-```bash
-# Create and activate a virtual environment
-python -m venv venv
+# Activate virtual environment
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
-```
 
-## Running the Application
-
-### Development Server
-
-```bash
+# Run the application (with hot reload)
 cd backend
-uvicorn main:app --reload
+python main.py
 ```
 
 The API will be available at http://localhost:8000
 
 ### API Documentation
 
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
+When the server is running, you can access:
+- API documentation at http://localhost:8000/docs
+- Alternative documentation at http://localhost:8000/redoc
 
-## Testing
+### Testing
 
-### Running Unit Tests
+To run the unit tests:
 
 ```bash
-cd backend
-pytest
+# Activate virtual environment
+source venv/bin/activate
+
+# Run core functionality tests
+python -m backend.tests.test_core
+
+# Run API integration tests (with server running)
+python backend/tests/test_api.py
+
+# Run tests and start server in one command
+./test_server.sh
 ```
 
-## Project Structure
+## Deployment Options
 
+### Render Deployment (Recommended)
+
+This repository includes a `render.yaml` file for easy deployment to [Render](https://render.com).
+
+1. Sign up for a free Render account
+2. Connect your GitHub repository
+3. Create a new Web Service, selecting the repository
+4. Render will automatically detect the `render.yaml` configuration
+5. Click "Apply" to deploy
+
+### Docker Container
+
+```bash
+# Build the Docker image
+docker build -t pareto-backend .
+
+# Run the container
+docker run -d -p 8000:8000 --name pareto pareto-backend
 ```
-backend/
-├── app/
-│   ├── core/
-│   │   ├── pareto.py       # Pareto optimization algorithms
-│   │   ├── scheduler.py    # Schedule generation logic
-│   │   └── scoring.py      # Objective scoring functions
-│   ├── models/
-│   │   ├── task.py
-│   │   ├── objective.py
-│   │   └── schedule.py
-│   ├── services/
-│   │   ├── task_service.py
-│   │   ├── objective_service.py
-│   │   └── schedule_service.py
-│   ├── api/
-│   │   ├── tasks.py
-│   │   ├── objectives.py
-│   │   └── schedules.py
-│   └── utils/
-│       ├── auth.py
-│       └── validation.py
-└── tests/
-```
+
+### Other Cloud Providers
+
+The app can also be deployed to:
+- Fly.io (Free tier available)
+- Railway (Starting at $5/month)
+- PythonAnywhere (Free tier available)
+- Heroku (Basic Eco dynos at $5/month)
 
 ## API Endpoints
 
-### Tasks API
+Main resource endpoints:
 
-- POST /tasks/ - Create new task
-- GET /tasks/ - List all tasks
-- GET /tasks/{id} - Get task details
-- PUT /tasks/{id} - Update task
-- DELETE /tasks/{id} - Delete task
+- `/tasks` - Create, read, update and delete tasks
+- `/objectives` - Manage life goals and objectives
+- `/schedules` - Generate and manage schedules
 
-### Objectives API
+## Architecture
 
-- POST /objectives/ - Create objective
-- GET /objectives/ - List objectives
-- PUT /objectives/{id} - Update objective
-- DELETE /objectives/{id} - Delete objective
+The application follows a layered architecture:
 
-### Schedule API
-
-- POST /schedules/generate - Generate optimal schedules
-- GET /schedules/ - List current schedules
-- GET /schedules/pareto - Get Pareto-optimal schedules
-- PUT /schedules/{id} - Update schedule
+- `models/` - Database models and Pydantic schemas
+- `api/` - API routes and controllers 
+- `services/` - Business logic layer
+- `core/` - Algorithmic implementations (scheduling, Pareto optimization)
+- `utils/` - Utility functions and helpers
 
 ## License
 
-MIT
+This project is licensed under the MIT License - see the LICENSE file for details.

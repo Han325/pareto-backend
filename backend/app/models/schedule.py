@@ -1,6 +1,5 @@
 import uuid
 from sqlalchemy import Column, String, DateTime, Integer, Boolean, ForeignKey, Table, JSON
-from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from typing import List, Dict, Optional, Any
@@ -12,8 +11,8 @@ from .base import Base
 schedule_tasks = Table(
     'schedule_tasks',
     Base.metadata,
-    Column('schedule_id', UUID(as_uuid=True), ForeignKey('schedules.id'), primary_key=True),
-    Column('task_id', UUID(as_uuid=True), ForeignKey('tasks.id'), primary_key=True),
+    Column('schedule_id', String, ForeignKey('schedules.id'), primary_key=True),
+    Column('task_id', String, ForeignKey('tasks.id'), primary_key=True),
     # Store scheduled start time for each task
     Column('start_time', DateTime, nullable=False)
 )
@@ -22,7 +21,7 @@ class Schedule(Base):
     """Schedule model representing a proposed arrangement of tasks."""
     __tablename__ = "schedules"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     name = Column(String, nullable=False)
     start_date = Column(DateTime, nullable=False)
     end_date = Column(DateTime, nullable=False)
@@ -53,7 +52,7 @@ class Schedule(Base):
 
 # Pydantic API models
 class ScheduleTaskInfo(BaseModel):
-    task_id: uuid.UUID
+    task_id: str
     start_time: datetime
 
 class ScheduleBase(BaseModel):
@@ -83,7 +82,7 @@ class ScheduleUpdate(BaseModel):
         return v
 
 class ScheduleResponse(ScheduleBase):
-    id: uuid.UUID
+    id: str
     tasks: List[ScheduleTaskInfo]
     objective_scores: Dict[str, float]  # objective_id -> score
     pareto_rank: int

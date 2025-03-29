@@ -26,7 +26,7 @@ def read_schedules(skip: int = 0, limit: int = 100, db: Session = Depends(get_db
     return ScheduleService.get_schedules(db, skip, limit)
 
 @router.get("/{schedule_id}", response_model=ScheduleResponse)
-def read_schedule(schedule_id: uuid.UUID, db: Session = Depends(get_db)):
+def read_schedule(schedule_id: str, db: Session = Depends(get_db)):
     """Get a specific schedule by ID"""
     schedule = ScheduleService.get_schedule(db, schedule_id)
     if schedule is None:
@@ -37,7 +37,7 @@ def read_schedule(schedule_id: uuid.UUID, db: Session = Depends(get_db)):
     return schedule
 
 @router.put("/{schedule_id}", response_model=ScheduleResponse)
-def update_schedule(schedule_id: uuid.UUID, schedule: ScheduleUpdate, db: Session = Depends(get_db)):
+def update_schedule(schedule_id: str, schedule: ScheduleUpdate, db: Session = Depends(get_db)):
     """Update a schedule"""
     updated_schedule = ScheduleService.update_schedule(db, schedule_id, schedule)
     if updated_schedule is None:
@@ -48,7 +48,7 @@ def update_schedule(schedule_id: uuid.UUID, schedule: ScheduleUpdate, db: Sessio
     return updated_schedule
 
 @router.delete("/{schedule_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_schedule(schedule_id: uuid.UUID, db: Session = Depends(get_db)):
+def delete_schedule(schedule_id: str, db: Session = Depends(get_db)):
     """Delete a schedule"""
     success = ScheduleService.delete_schedule(db, schedule_id)
     if not success:
@@ -79,7 +79,7 @@ def get_pareto_optimal_schedules(db: Session = Depends(get_db)):
 
 @router.post("/{schedule_id}/check-feasibility", response_model=bool)
 def check_schedule_feasibility(
-    schedule_id: uuid.UUID,
+    schedule_id: str,
     constraints: TimeConstraints,
     db: Session = Depends(get_db)
 ):

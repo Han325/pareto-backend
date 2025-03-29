@@ -14,7 +14,7 @@ class ObjectiveService:
         return db.query(Objective).offset(skip).limit(limit).all()
     
     @staticmethod
-    def get_objective(db: Session, objective_id: uuid.UUID) -> Optional[Objective]:
+    def get_objective(db: Session, objective_id: str) -> Optional[Objective]:
         """Get a specific objective by ID"""
         return db.query(Objective).filter(Objective.id == objective_id).first()
     
@@ -37,7 +37,7 @@ class ObjectiveService:
         return db_objective
     
     @staticmethod
-    def update_objective(db: Session, objective_id: uuid.UUID, 
+    def update_objective(db: Session, objective_id: str, 
                        objective: ObjectiveUpdate) -> Optional[Objective]:
         """Update an existing objective"""
         db_objective = db.query(Objective).filter(Objective.id == objective_id).first()
@@ -56,7 +56,7 @@ class ObjectiveService:
         return db_objective
     
     @staticmethod
-    def delete_objective(db: Session, objective_id: uuid.UUID) -> bool:
+    def delete_objective(db: Session, objective_id: str) -> bool:
         """Delete an objective"""
         db_objective = db.query(Objective).filter(Objective.id == objective_id).first()
         
@@ -73,7 +73,7 @@ class ObjectiveService:
         return db.query(Objective).filter(Objective.category == category).all()
     
     @staticmethod
-    def update_objective_progress(db: Session, objective_id: uuid.UUID, 
+    def update_objective_progress(db: Session, objective_id: str, 
                                 value: float) -> Optional[Objective]:
         """Update the current value of an objective"""
         db_objective = db.query(Objective).filter(Objective.id == objective_id).first()
@@ -110,7 +110,7 @@ class ObjectiveService:
         db.commit()
     
     @staticmethod
-    def get_progress_percentages(db: Session) -> Dict[uuid.UUID, float]:
+    def get_progress_percentages(db: Session) -> Dict[str, float]:
         """Calculate progress percentage for all objectives"""
         objectives = db.query(Objective).all()
         

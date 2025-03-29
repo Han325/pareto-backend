@@ -21,7 +21,7 @@ class ScheduleService:
         return db.query(Schedule).offset(skip).limit(limit).all()
     
     @staticmethod
-    def get_schedule(db: Session, schedule_id: uuid.UUID) -> Optional[Schedule]:
+    def get_schedule(db: Session, schedule_id: str) -> Optional[Schedule]:
         """Get a specific schedule by ID"""
         return db.query(Schedule).filter(Schedule.id == schedule_id).first()
     
@@ -56,8 +56,8 @@ class ScheduleService:
         objectives = db.query(Objective).all()
         scores = calculate_objective_scores(db_schedule, objectives)
         
-        # Store scores as strings (JSON doesn't support UUID keys)
-        db_schedule.objective_scores = {str(obj_id): score for obj_id, score in scores.items()}
+        # Store scores
+        db_schedule.objective_scores = scores
         
         db.commit()
         db.refresh(db_schedule)
@@ -65,7 +65,7 @@ class ScheduleService:
         return db_schedule
     
     @staticmethod
-    def update_schedule(db: Session, schedule_id: uuid.UUID, 
+    def update_schedule(db: Session, schedule_id: str, 
                        schedule: ScheduleUpdate) -> Optional[Schedule]:
         """Update an existing schedule"""
         db_schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
@@ -95,15 +95,15 @@ class ScheduleService:
             objectives = db.query(Objective).all()
             scores = calculate_objective_scores(db_schedule, objectives)
             
-            # Store scores as strings (JSON doesn't support UUID keys)
-            db_schedule.objective_scores = {str(obj_id): score for obj_id, score in scores.items()}
+            # Store scores
+            db_schedule.objective_scores = scores
         
         db.commit()
         db.refresh(db_schedule)
         return db_schedule
     
     @staticmethod
-    def delete_schedule(db: Session, schedule_id: uuid.UUID) -> bool:
+    def delete_schedule(db: Session, schedule_id: str) -> bool:
         """Delete a schedule"""
         db_schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
         
@@ -165,17 +165,15 @@ class ScheduleService:
             return []
             
         # Normalize scores across schedules
-        for schedule in schedules:
-            # Convert string keys back to UUIDs
-            schedule.objective_scores = {uuid.UUID(k): v for k, v in schedule.objective_scores.items()}
+        # No need to convert string keys, we're using strings now
+        pass
             
         # Calculate Pareto front
         pareto_front = calculate_pareto_front(schedules)
         
         # Update schedules in database
         for schedule in schedules:
-            # Convert back to string keys for database storage
-            schedule.objective_scores = {str(k): v for k, v in schedule.objective_scores.items()}
+            # No need to convert keys, we're already using strings
             db.add(schedule)
             
         db.commit()
@@ -184,7 +182,7 @@ class ScheduleService:
         return [s for s in schedules if s.pareto_rank == 0]
     
     @staticmethod
-    def check_schedule_feasibility(db: Session, schedule_id: uuid.UUID, 
+    def check_schedule_feasibility(db: Session, schedule_id: str, 
                                  constraints: TimeConstraints) -> bool:
         """Check if a schedule is feasible given constraints"""
         schedule = db.query(Schedule).filter(Schedule.id == schedule_id).first()
@@ -196,6 +194,6 @@ class ScheduleService:
     
     @staticmethod
     def calculate_objective_scores(schedule: Schedule, 
-                                 objectives: List[Objective]) -> Dict[uuid.UUID, float]:
+                                 objectives: List[Objective]) -> Dict[str, float]:
         """Calculate objective scores for a schedule"""
         return calculate_objective_scores(schedule, objectives)

@@ -1,7 +1,6 @@
 import enum
 import uuid
 from sqlalchemy import Column, String, Integer, Float, DateTime, Enum, Boolean, ForeignKey, Table
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from typing import List, Optional
@@ -14,8 +13,8 @@ from .base import Base
 task_dependencies = Table(
     'task_dependencies',
     Base.metadata,
-    Column('task_id', UUID(as_uuid=True), ForeignKey('tasks.id'), primary_key=True),
-    Column('dependency_id', UUID(as_uuid=True), ForeignKey('tasks.id'), primary_key=True)
+    Column('task_id', String, ForeignKey('tasks.id'), primary_key=True),
+    Column('dependency_id', String, ForeignKey('tasks.id'), primary_key=True)
 )
 
 class TaskCategory(str, enum.Enum):
@@ -39,7 +38,7 @@ class Task(Base):
     """Task model representing individual activities that can be scheduled."""
     __tablename__ = "tasks"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     title = Column(String, nullable=False)
     description = Column(String)
     duration = Column(Integer, nullable=False)  # in minutes
@@ -100,7 +99,7 @@ class TaskBase(BaseModel):
     
 class TaskCreate(TaskBase):
     # Default to empty list if no dependencies specified
-    dependencies: List[uuid.UUID] = Field(default_factory=list)
+    dependencies: List[str] = Field(default_factory=list)
 
 class TaskUpdate(BaseModel):
     # All fields optional for PATCH requests
@@ -112,7 +111,7 @@ class TaskUpdate(BaseModel):
     priority: Optional[int] = None
     deadline: Optional[datetime] = None
     status: Optional[TaskStatus] = None
-    dependencies: Optional[List[uuid.UUID]] = None
+    dependencies: Optional[List[str]] = None
     
     @validator('priority')
     def priority_range(cls, v):
@@ -127,9 +126,9 @@ class TaskUpdate(BaseModel):
         return v
 
 class TaskResponse(TaskBase):
-    id: uuid.UUID
+    id: str
     status: TaskStatus
-    dependencies: List[uuid.UUID]
+    dependencies: List[str]
     
     class Config:
         from_attributes = True

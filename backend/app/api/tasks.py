@@ -1,5 +1,5 @@
 from typing import List, Optional
-import uuid
+# import uuid (replaced by str)
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 
@@ -48,7 +48,7 @@ def read_tasks(
     return tasks
 
 @router.get("/{task_id}", response_model=TaskResponse)
-def read_task(task_id: uuid.UUID, db: Session = Depends(get_db)):
+def read_task(task_id: str, db: Session = Depends(get_db)):
     """Get a specific task by ID"""
     task = TaskService.get_task(db, task_id)
     if task is None:
@@ -59,7 +59,7 @@ def read_task(task_id: uuid.UUID, db: Session = Depends(get_db)):
     return task
 
 @router.put("/{task_id}", response_model=TaskResponse)
-def update_task(task_id: uuid.UUID, task: TaskUpdate, db: Session = Depends(get_db)):
+def update_task(task_id: str, task: TaskUpdate, db: Session = Depends(get_db)):
     """Update a task"""
     # Check for circular dependencies
     if task.dependencies:
@@ -79,7 +79,7 @@ def update_task(task_id: uuid.UUID, task: TaskUpdate, db: Session = Depends(get_
     return updated_task
 
 @router.delete("/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_task(task_id: uuid.UUID, db: Session = Depends(get_db)):
+def delete_task(task_id: str, db: Session = Depends(get_db)):
     """Delete a task"""
     success = TaskService.delete_task(db, task_id)
     if not success:

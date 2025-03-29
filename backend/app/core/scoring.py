@@ -6,6 +6,31 @@ from ..models.task import Task, TaskCategory
 from ..models.objective import Objective, TimeFrame
 from ..models.schedule import Schedule
 
+def calculate_objective_scores(schedule: Schedule, objectives: List[Objective]) -> Dict[str, float]:
+    """
+    Calculate how well a schedule satisfies each objective.
+    
+    Args:
+        schedule: The schedule to evaluate
+        objectives: List of objectives to score against
+        
+    Returns:
+        Dictionary mapping objective IDs to scores
+    """
+    scores = {}
+    
+    for objective in objectives:
+        # Calculate raw score for this objective
+        raw_score = score_schedule_for_objective(schedule, objective)
+        
+        # Normalize to 0-1 scale (higher is better)
+        normalized_score = min(1.0, max(0.0, raw_score / (objective.target_value or 1.0)))
+        
+        # Store score
+        scores[str(objective.id)] = normalized_score
+    
+    return scores
+
 def score_schedule_for_objective(schedule: Schedule, objective: Objective) -> float:
     """
     Calculate a raw score for how well a schedule satisfies an objective.

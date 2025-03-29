@@ -35,7 +35,7 @@ def read_objectives(
         return ObjectiveService.get_objectives(db, skip, limit)
 
 @router.get("/{objective_id}", response_model=ObjectiveResponse)
-def read_objective(objective_id: uuid.UUID, db: Session = Depends(get_db)):
+def read_objective(objective_id: str, db: Session = Depends(get_db)):
     """Get a specific objective by ID"""
     objective = ObjectiveService.get_objective(db, objective_id)
     if objective is None:
@@ -46,7 +46,7 @@ def read_objective(objective_id: uuid.UUID, db: Session = Depends(get_db)):
     return objective
 
 @router.put("/{objective_id}", response_model=ObjectiveResponse)
-def update_objective(objective_id: uuid.UUID, objective: ObjectiveUpdate, db: Session = Depends(get_db)):
+def update_objective(objective_id: str, objective: ObjectiveUpdate, db: Session = Depends(get_db)):
     """Update an objective"""
     updated_objective = ObjectiveService.update_objective(db, objective_id, objective)
     if updated_objective is None:
@@ -57,7 +57,7 @@ def update_objective(objective_id: uuid.UUID, objective: ObjectiveUpdate, db: Se
     return updated_objective
 
 @router.delete("/{objective_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_objective(objective_id: uuid.UUID, db: Session = Depends(get_db)):
+def delete_objective(objective_id: str, db: Session = Depends(get_db)):
     """Delete an objective"""
     success = ObjectiveService.delete_objective(db, objective_id)
     if not success:
@@ -68,7 +68,7 @@ def delete_objective(objective_id: uuid.UUID, db: Session = Depends(get_db)):
     return None
 
 @router.put("/{objective_id}/progress", response_model=ObjectiveResponse)
-def update_objective_progress(objective_id: uuid.UUID, value: float, db: Session = Depends(get_db)):
+def update_objective_progress(objective_id: str, value: float, db: Session = Depends(get_db)):
     """
     Update the current value of an objective
     

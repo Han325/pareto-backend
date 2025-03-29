@@ -1,7 +1,6 @@
 import enum
 import uuid
 from sqlalchemy import Column, String, Float, Enum
-from sqlalchemy.dialects.postgresql import UUID
 from typing import Optional
 from pydantic import BaseModel, Field, validator
 
@@ -19,7 +18,7 @@ class Objective(Base):
     """Database model for life objectives/goals."""
     __tablename__ = "objectives"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     name = Column(String, nullable=False)
     category = Column(Enum(TaskCategory), nullable=False)
     target_value = Column(Float, nullable=False)  # what we're aiming for
@@ -67,7 +66,7 @@ class ObjectiveUpdate(BaseModel):
         return v
 
 class ObjectiveResponse(ObjectiveBase):
-    id: uuid.UUID
+    id: str
     current_value: float
     
     class Config:

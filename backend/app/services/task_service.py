@@ -15,7 +15,7 @@ class TaskService:
         return db.query(Task).offset(skip).limit(limit).all()
     
     @staticmethod
-    def get_task(db: Session, task_id: uuid.UUID) -> Optional[Task]:
+    def get_task(db: Session, task_id: str) -> Optional[Task]:
         """Get a specific task by ID"""
         return db.query(Task).filter(Task.id == task_id).first()
     
@@ -60,7 +60,7 @@ class TaskService:
         return db_task
     
     @staticmethod
-    def update_task(db: Session, task_id: uuid.UUID, task: TaskUpdate) -> Optional[Task]:
+    def update_task(db: Session, task_id: str, task: TaskUpdate) -> Optional[Task]:
         """Update an existing task"""
         db_task = db.query(Task).filter(Task.id == task_id).first()
         
@@ -102,7 +102,7 @@ class TaskService:
         return db_task
     
     @staticmethod
-    def delete_task(db: Session, task_id: uuid.UUID) -> bool:
+    def delete_task(db: Session, task_id: str) -> bool:
         """Delete a task"""
         db_task = db.query(Task).filter(Task.id == task_id).first()
         
@@ -129,7 +129,7 @@ class TaskService:
         return db.query(Task).filter(Task.priority >= min_priority).all()
     
     @staticmethod
-    def check_circular_dependencies(task_id: uuid.UUID, dependency_ids: List[uuid.UUID], 
+    def check_circular_dependencies(task_id: str, dependency_ids: List[str], 
                                    db: Session) -> bool:
         """
         Check if adding these dependencies would create a circular dependency.
@@ -137,7 +137,7 @@ class TaskService:
         Returns True if circular dependency detected, False otherwise.
         """
         # Helper function to find all indirect dependencies
-        def get_all_dependencies(tid: uuid.UUID, visited: Set[uuid.UUID] = None) -> Set[uuid.UUID]:
+        def get_all_dependencies(tid: str, visited: Set[str] = None) -> Set[str]:
             if visited is None:
                 visited = set()
                 
